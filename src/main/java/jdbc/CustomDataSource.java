@@ -1,10 +1,6 @@
 package jdbc;
 
 import javax.sql.DataSource;
-
-import lombok.Getter;
-import lombok.Setter;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
@@ -13,9 +9,9 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-@Getter
-@Setter
+
 public class CustomDataSource implements DataSource {
+
     private static volatile CustomDataSource instance;
     private static final SQLException SQL_EXCEPTION = new SQLException();
     private static final Object MONITOR = new Object();
@@ -33,6 +29,7 @@ public class CustomDataSource implements DataSource {
     }
 
     public static CustomDataSource getInstance() {
+
         if (instance == null) {
 
             synchronized (MONITOR) {
@@ -64,15 +61,16 @@ public class CustomDataSource implements DataSource {
         }
 
         return instance;
+
     }
 
     @Override
-    public Connection getConnection() throws SQLException {
+    public Connection getConnection() {
         return new CustomConnector().getConnection(url, name, password);
     }
 
     @Override
-    public Connection getConnection(String username, String password) throws SQLException {
+    public Connection getConnection(String username, String password) {
         return new CustomConnector().getConnection(url, username, password);
     }
 
@@ -100,6 +98,7 @@ public class CustomDataSource implements DataSource {
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {
         throw new SQLFeatureNotSupportedException();
     }
+
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         throw SQL_EXCEPTION;
