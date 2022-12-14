@@ -6,20 +6,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
 public class SimpleJDBCRepository {
-    private CustomDataSource dataSource;
-    private Connection connection;
-    private PreparedStatement ps;
-    private Statement st;
-
     private static final String createUserSQL = "INSERT INTO myusers (firstname, lastname, age) VALUES(?, ?, ?)";
     private static final String updateUserSQL = "UPDATE myusers SET firstname = ?, lastname = ?, age = ? WHERE id = ?";
     private static final String deleteUser = "DELETE FROM myusers WHERE id = ?";
@@ -29,28 +24,21 @@ public class SimpleJDBCRepository {
 
     public Long createUser(User user) {
         Long result = null;
-        try {
-            connection = dataSource.getConnection();
-            ps = connection.prepareStatement(createUserSQL);
+        try (Connection connection = CustomDataSource.getInstance().getConnection(); PreparedStatement ps = connection.prepareStatement(createUserSQL);) {
             ps.setString(1, user.getFirstName());
             ps.setString(2, user.getLastName());
             ps.setString(3, String.valueOf(user.getAge()));
             result = (long) ps.executeUpdate();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
-        } finally {
-            try { ps.close(); } catch (Exception e) { /* Ignored */ }
-            try { connection.close(); } catch (Exception e) { /* Ignored */ }
         }
         return result;
     }
 
     public User findUserById(Long userId) {
-        ResultSet rs = null;
         User user = null;
-        try {
-            connection = dataSource.getConnection();
-            ps = connection.prepareStatement(findUserByIdSQL);
+        ResultSet rs;
+        try (Connection connection = CustomDataSource.getInstance().getConnection(); PreparedStatement ps = connection.prepareStatement(findUserByIdSQL);) {
             ps.setString(1, String.valueOf(userId));
             rs = ps.executeQuery();
             if (!rs.next()) throw new SQLException("No such users");
@@ -62,10 +50,6 @@ public class SimpleJDBCRepository {
             user = new User(userId, firstname, lastname, age);
         } catch (SQLException throwables) {
             throwables.printStackTrace();
-        } finally {
-            try { rs.close(); } catch (Exception e) {}
-            try { ps.close(); } catch (Exception e) {}
-            try { connection.close(); } catch (Exception e) {}
         }
         return user;
     }
@@ -73,9 +57,7 @@ public class SimpleJDBCRepository {
     public User findUserByName(String userName) {
         ResultSet rs = null;
         User user = null;
-        try {
-            connection = dataSource.getConnection();
-            ps = connection.prepareStatement(findUserByNameSQL);
+        try (Connection connection = CustomDataSource.getInstance().getConnection(); PreparedStatement ps = connection.prepareStatement(findUserByNameSQL);) {
             ps.setString(1, userName);
             rs = ps.executeQuery();
             if (!rs.next()) throw new SQLException("No such users");
@@ -88,10 +70,6 @@ public class SimpleJDBCRepository {
             user = new User(id, firstname, lastname, age);
         } catch (SQLException throwables) {
             throwables.printStackTrace();
-        } finally {
-            try { rs.close(); } catch (Exception e) {}
-            try { ps.close(); } catch (Exception e) {}
-            try { connection.close(); } catch (Exception e) {}
         }
         return user;
     }
@@ -99,9 +77,7 @@ public class SimpleJDBCRepository {
     public List<User> findAllUser() {
         List<User> users = null;
         ResultSet rs = null;
-        try {
-            connection = dataSource.getConnection();
-            st = connection.createStatement();
+        try (Connection connection = CustomDataSource.getInstance().getConnection(); Statement st = connection.createStatement()) {
             rs = st.executeQuery(findAllUserSQL);
             if (!rs.next()) throw new SQLException("There are no users!");
             users = new ArrayList<User>();
@@ -114,18 +90,12 @@ public class SimpleJDBCRepository {
             }
         } catch (SQLException throwables) {
             throwables.printStackTrace();
-        } finally {
-            try { rs.close(); } catch (Exception e) {}
-            try { ps.close(); } catch (Exception e) {}
-            try { connection.close(); } catch (Exception e) {}
         }
         return users;
     }
 
     public User updateUser(User user) {
-        try {
-            connection = dataSource.getConnection();
-            ps = connection.prepareStatement(updateUserSQL);
+        try (Connection connection = CustomDataSource.getInstance().getConnection(); PreparedStatement ps = connection.prepareStatement(updateUserSQL);) {
             ps.setString(1, user.getFirstName());
             ps.setString(2, user.getLastName());
             ps.setString(3, String.valueOf(user.getAge()));
@@ -133,24 +103,16 @@ public class SimpleJDBCRepository {
             if (ps.executeUpdate() == 0) throw new SQLException("No such user exists");
         } catch (SQLException throwables) {
             throwables.printStackTrace();
-        } finally {
-            try { ps.close(); } catch (Exception e) {}
-            try { connection.close(); } catch (Exception e) {}
         }
         return user;
     }
 
     public void deleteUser(Long userId) {
-        try {
-            connection = dataSource.getConnection();
-            ps = connection.prepareStatement(deleteUser);
+        try (Connection connection = CustomDataSource.getInstance().getConnection(); PreparedStatement ps = connection.prepareStatement(deleteUser);) {
             ps.setString(1, String.valueOf(userId));
             if (ps.executeUpdate() == 0) throw new SQLException("No such user exists");
         } catch (SQLException throwables) {
             throwables.printStackTrace();
-        } finally {
-            try { ps.close(); } catch (Exception e) {}
-            try { connection.close(); } catch (Exception e) {}
         }
     }
 
