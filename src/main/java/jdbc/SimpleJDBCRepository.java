@@ -35,7 +35,7 @@ public class SimpleJDBCRepository {
                 result = rs.getLong(1);
             }
         } catch (SQLException throwables) {
-            throwables.printStackTrace();
+            throwRuntimeException(throwables);
         }
         return result;
     }
@@ -54,7 +54,7 @@ public class SimpleJDBCRepository {
 
             user = new User(userId, firstname, lastname, age);
         } catch (SQLException throwables) {
-            throwables.printStackTrace();
+            throwRuntimeException(throwables);
         }
         return user;
     }
@@ -74,7 +74,7 @@ public class SimpleJDBCRepository {
 
             user = new User(id, firstname, lastname, age);
         } catch (SQLException throwables) {
-            throwables.printStackTrace();
+            throwRuntimeException(throwables);
         }
         return user;
     }
@@ -94,7 +94,7 @@ public class SimpleJDBCRepository {
                 users.add(new User(id, firstName, lastName, age));
             }
         } catch (SQLException throwables) {
-            throwables.printStackTrace();
+            throwRuntimeException(throwables);
         }
         return users;
     }
@@ -107,7 +107,7 @@ public class SimpleJDBCRepository {
             ps.setLong(4, user.getId());
             if (ps.executeUpdate() == 0) throw new SQLException("No such user exists");
         } catch (SQLException throwables) {
-            throwables.printStackTrace();
+            throwRuntimeException(throwables);
         }
         return user;
     }
@@ -117,12 +117,15 @@ public class SimpleJDBCRepository {
             ps.setLong(1, userId);
             if (ps.executeUpdate() == 0) throw new SQLException("No such user exists");
         } catch (SQLException throwables) {
-            throwables.printStackTrace();
+            throwRuntimeException(throwables);
         }
     }
-//    public void wrapException (Exception e) {
-//        e.printStackTrace();
-//        //throw new RuntimeException(e.getClass().getSimpleName() +" " +e.getMessage() + " " + e.getCause().getMessage()+ " " + e.getCause().getClass().getSimpleName());
-//    }
+    public void throwRuntimeException(Exception e) {
+        String message = String.format("%s: %s", e.getClass().getName(), e.getMessage());
+        if (e.getCause() != null) {
+            message += String.format("\nCause: %s: %s", e.getCause().getClass().getName(), e.getCause().getMessage());
+        }
+        throw new RuntimeException(message);
+    }
 
 }
