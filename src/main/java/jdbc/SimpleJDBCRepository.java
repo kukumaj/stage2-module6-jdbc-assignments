@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Getter
@@ -84,7 +85,6 @@ public class SimpleJDBCRepository {
         ResultSet rs = null;
         try (Connection connection = CustomDataSource.getInstance().getConnection(); Statement st = connection.createStatement()) {
             rs = st.executeQuery(findAllUserSQL);
-            if (!rs.next()) throw new SQLException("There are no users!");
             users = new ArrayList<User>();
             while (rs.next()) {
                 Long id = Long.parseLong(rs.getString("id"));
