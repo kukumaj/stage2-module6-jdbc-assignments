@@ -1,12 +1,10 @@
 package jdbc;
 
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +22,18 @@ public class SimpleJDBCRepository {
 
     public Long createUser(User user) {
         Long result = null;
-        try (Connection connection = CustomDataSource.getInstance().getConnection(); PreparedStatement ps = connection.prepareStatement(createUserSQL);) {
+        try (Connection connection = CustomDataSource.getInstance().getConnection();
+             PreparedStatement ps = connection.prepareStatement(createUserSQL, Statement.RETURN_GENERATED_KEYS);) {
             ps.setString(1, user.getFirstName());
             ps.setString(2, user.getLastName());
-            ps.setString(3, String.valueOf(user.getAge()));
-            result = (long) ps.executeUpdate();
+            ps.setInt(3, user.getAge());
+            ps.executeUpdate();
+
+            // Retrieve the ID of the newly inserted row
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                result = rs.getLong(1);
+            }
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
@@ -39,13 +44,13 @@ public class SimpleJDBCRepository {
         User user = null;
         ResultSet rs;
         try (Connection connection = CustomDataSource.getInstance().getConnection(); PreparedStatement ps = connection.prepareStatement(findUserByIdSQL);) {
-            ps.setString(1, String.valueOf(userId));
+            ps.setLong(1, userId);
             rs = ps.executeQuery();
             if (!rs.next()) throw new SQLException("No such users");
 
             String firstname = rs.getString("firstname");
             String lastname = rs.getString("lastname");
-            int age = Integer.parseInt(rs.getString("age"));
+            int age = rs.getInt("age");
 
             user = new User(userId, firstname, lastname, age);
         } catch (SQLException throwables) {
@@ -64,7 +69,7 @@ public class SimpleJDBCRepository {
 
             String firstname = rs.getString("firstname");
             String lastname = rs.getString("lastname");
-            int age = Integer.parseInt(rs.getString("age"));
+            int age = rs.getInt("age");
             Long id = Long.parseLong(rs.getString("id"));
 
             user = new User(id, firstname, lastname, age);
@@ -85,7 +90,7 @@ public class SimpleJDBCRepository {
                 Long id = Long.parseLong(rs.getString("id"));
                 String firstName = rs.getString("firstname");
                 String lastName = rs.getString("lastname");
-                int age = Integer.parseInt("age");
+                int age = rs.getInt("age");
                 users.add(new User(id, firstName, lastName, age));
             }
         } catch (SQLException throwables) {
@@ -98,8 +103,8 @@ public class SimpleJDBCRepository {
         try (Connection connection = CustomDataSource.getInstance().getConnection(); PreparedStatement ps = connection.prepareStatement(updateUserSQL);) {
             ps.setString(1, user.getFirstName());
             ps.setString(2, user.getLastName());
-            ps.setString(3, String.valueOf(user.getAge()));
-            ps.setString(4, String.valueOf(user.getId()));
+            ps.setInt(3, user.getAge());
+            ps.setLong(4, user.getId());
             if (ps.executeUpdate() == 0) throw new SQLException("No such user exists");
         } catch (SQLException throwables) {
             throwables.printStackTrace();
@@ -109,11 +114,15 @@ public class SimpleJDBCRepository {
 
     public void deleteUser(Long userId) {
         try (Connection connection = CustomDataSource.getInstance().getConnection(); PreparedStatement ps = connection.prepareStatement(deleteUser);) {
-            ps.setString(1, String.valueOf(userId));
+            ps.setLong(1, userId);
             if (ps.executeUpdate() == 0) throw new SQLException("No such user exists");
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
     }
+//    public void wrapException (Exception e) {
+//        e.printStackTrace();
+//        //throw new RuntimeException(e.getClass().getSimpleName() +" " +e.getMessage() + " " + e.getCause().getMessage()+ " " + e.getCause().getClass().getSimpleName());
+//    }
 
 }
